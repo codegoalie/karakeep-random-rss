@@ -1,0 +1,33 @@
+services:
+  karakeep-random-rss:
+    build: .
+    # image: ghcr.io/codegoalie/karakeep-random-rss:latest
+    container_name: karakeep-random-rss
+    restart: unless-stopped
+    environment:
+      KARAKEEP_URL: "https://karakeep.example.com"
+      KARAKEEP_API_KEY: "${KARAKEEP_API_KEY:?set KARAKEEP_API_KEY in .env}"
+      INTERVAL: "24h"
+      LISTEN: ":8080"
+      PUBLIC_URL: "http://karakeep-random-rss:8080/feed.xml"
+      FEED_TITLE: "Karakeep: a random link"
+      FEED_ITEMS: "50"
+    volumes:
+      - karakeep-random-rss-state:/data
+    ports:
+      - "127.0.0.1:8088:8080"
+    healthcheck:
+      # distroless has no shell or curl; the binary is the only thing in the
+      # image, so rely on your reverse proxy or drop this block if it bites.
+      disable: true
+    # If Miniflux runs in another compose project, join its network instead of
+    # publishing a port, and point Miniflux at http://karakeep-random-rss:8080/feed.xml
+    # networks:
+    #   - miniflux
+
+volumes:
+  karakeep-random-rss-state:
+
+# networks:
+#   miniflux:
+#     external: true

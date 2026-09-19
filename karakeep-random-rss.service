@@ -1,0 +1,39 @@
+[Unit]
+Description=Publish a random Karakeep bookmark to an RSS feed
+Documentation=https://github.com/codegoalie/karakeep-random-rss
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Put KARAKEEP_URL, KARAKEEP_API_KEY, INTERVAL etc. here. Mode 0600, root-owned.
+EnvironmentFile=/etc/karakeep-random-rss.env
+Environment=STATE_FILE=/var/lib/karakeep-random-rss/state.json
+ExecStart=/usr/local/bin/karakeep-random-rss
+Restart=on-failure
+RestartSec=10s
+
+# State directory, created and chowned automatically.
+DynamicUser=yes
+StateDirectory=karakeep-random-rss
+
+# Hardening: this thing makes outbound HTTPS calls and writes one JSON file.
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target
