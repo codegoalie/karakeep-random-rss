@@ -1,0 +1,7 @@
+# karakeep-random-rss stack environment file (percival) — fixture for
+# scripts/bump-deployed-version_test.sh. Mirrors the shape of a real
+# dockhand env file: a leading comment, a blank line, KARAKEEP_RANDOM_RSS_VERSION,
+# and another key.
+
+KARAKEEP_RANDOM_RSS_VERSION=v0.2.1
+FEED_TITLE=fixture-feed-title
