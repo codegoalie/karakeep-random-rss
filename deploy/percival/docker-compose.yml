@@ -1,0 +1,76 @@
+# Deployment compose file for the `percival` homelab host, managed there by
+# dockhand as a git-backed stack: dockhand polls this repo on a cron and
+# redeploys when it sees a change (see `git tag vX.Y.Z && git push --tags`
+# in deploy/README.md). This file itself is not the version pin — the version
+# comes from the sibling env file, deploy/percival/karakeep-random-rss.env,
+# committed alongside it and loaded by dockhand as the stack's env file.
+#
+# This pulls a published image from GHCR; nothing is built on percival.
+
+# Pin the project name: it otherwise defaults to the parent directory
+# (`percival`), which would name the stack and its volume after the host
+# rather than the app (`percival_state` instead of `karakeep-random-rss_state`).
+# This matters even more now that dockhand manages this as a git stack:
+# the project name determines the named volume (`karakeep-random-rss_state`), so
+# it must stay `karakeep-random-rss` for the existing volume to be reused across
+# redeploys rather than orphaned.
+name: karakeep-random-rss
+
+services:
+  karakeep-random-rss:
+    # The deployed version comes from KARAKEEP_RANDOM_RSS_VERSION, set in the
+    # committed deploy/percival/karakeep-random-rss.env and loaded by dockhand as
+    # the stack's env file — rolling out a release means bumping that
+    # file and pushing, not editing anything in the dockhand UI (see
+    # deploy/README.md). This compose file never goes stale.
+    #
+    # Required form: an unset variable fails the deploy rather than
+    # silently resolving to `:` (an invalid tag). Use ${KARAKEEP_RANDOM_RSS_VERSION:-v0.1.0}
+    # instead if you'd rather have a fallback default.
+    #
+    # Note the leading `v`: CI publishes v-prefixed tags (see
+    # .github/workflows/release.yml), matching wall-e / random-motivation.
+    image: ghcr.io/codegoalie/karakeep-random-rss:${KARAKEEP_RANDOM_RSS_VERSION:?set KARAKEEP_RANDOM_RSS_VERSION in deploy/percival/karakeep-random-rss.env}
+    restart: unless-stopped
+    container_name: karakeep-random-rss
+    environment:
+      KARAKEEP_URL: ${KARAKEEP_URL:?set KARAKEEP_URL in deploy/percival/karakeep-random-rss.env}
+      # Fail loud rather than silently start unauthenticated: dockhand must
+      # set KARAKEEP_API_KEY in its own environment/secrets UI for this service.
+      # It is NOT committed here — treat it as sensitive (see deploy/README.md).
+      KARAKEEP_API_KEY: ${KARAKEEP_API_KEY:?KARAKEEP_API_KEY must be set as a dockhand stack variable}
+      INTERVAL: ${INTERVAL:?set INTERVAL in deploy/percival/karakeep-random-rss.env}
+      PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL in deploy/percival/karakeep-random-rss.env}
+      # Must match the state:/state volume mount below. This overrides the
+      # Dockerfile's own default of /data/state.json to ensure persistence
+      # across redeploys uses the named volume's mount point.
+      STATE_FILE: /state/state.json
+      FEED_ITEMS: ${FEED_ITEMS:?set FEED_ITEMS in deploy/percival/karakeep-random-rss.env}
+      FEED_TITLE: ${FEED_TITLE:?set FEED_TITLE in deploy/percival/karakeep-random-rss.env}
+    volumes:
+      # state.json MUST persist across redeploys or the seen-set resets and
+      # links repeat. This named volume is managed by compose and lives on
+      # the host.
+      - state:/state
+    # No healthcheck: the runtime image is distroless (no shell, no curl,
+    # no wget) so there's nothing here to shell out to. GET /healthz is
+    # checked from the outside instead, by other containers or monitoring.
+    networks:
+      - karakeep_default
+      - feeds
+
+volumes:
+  state:
+
+# `feeds` exists solely so Miniflux can resolve this container by name and
+# fetch its feed. Miniflux sits on the default `bridge` network on percival,
+# which has no automatic container-name DNS, so a user-defined network is
+# required for hostname resolution to work at all — `feeds` is that network.
+# This service has no database and needs no other shared network. `feeds`
+# must be created on percival and Miniflux attached to it before first
+# deploy (see deploy/README.md's one-time setup).
+networks:
+  karakeep_default:
+    external: true
+  feeds:
+    external: true
