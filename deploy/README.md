@@ -72,6 +72,28 @@ Add the feed `http://karakeep-random-rss:8080/feed.xml` to Miniflux at
 `rss.c18l.com`. Both containers sit on the `feeds` network (see one-time setup
 above), which resolves the hostname and makes the feed reachable.
 
+**Miniflux must be allowed to fetch private-network hosts.** Miniflux 2.3.x
+ships an SSRF guard that refuses any target resolving into a private IP
+range, so the first subscription attempt fails with:
+
+```
+fetcher: refusing to access private network host "172.26.0.3"
+```
+
+DNS resolving to a `172.x` address is the guard working as designed, not a
+`feeds` network problem. Set `FETCHER_ALLOW_PRIVATE_NETWORKS=1` on the
+Miniflux stack in dockhand and redeploy it. (`INTEGRATION_ALLOW_PRIVATE_NETWORKS`
+is the sibling option for integrations and is not needed for feed fetching.)
+
+After redeploying Miniflux, re-check that it is still attached to `feeds`
+(one-time setup step 3) — a redeploy is exactly what drops a network that
+was only ever added with `docker network connect`.
+
+Note also that Miniflux runs from the unpinned `miniflux/miniflux` tag on
+percival, which is how this guard appeared without warning between the
+2.1.4 that the old CasaOS config pinned and the 2.3.3 running now.
+Pinning the tag would make such changes deliberate.
+
 Note that Miniflux's feed refresh interval setting is independent of this
 service's `INTERVAL` env var. This service publishes exactly one new item per
 `INTERVAL`, regardless of how often Miniflux polls it. Set Miniflux's refresh
