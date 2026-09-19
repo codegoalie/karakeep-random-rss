@@ -100,6 +100,15 @@ git commit -am "chore(deploy): release vX.Y.Z"
 git push
 ```
 
+**Deferred improvement — push webhook.** The stack currently syncs on the
+`*/15 * * * *` cron only, so a release lands up to 15 minutes after CI
+commits the version bump. Dockhand's "Enable webhook" option (off today)
+takes push events from GitHub and syncs immediately, which would make
+releases near-instant. Turning it on means enabling it in the stack's
+settings and adding the resulting URL as a webhook in the GitHub repo's
+settings — note dockhand must be reachable from GitHub for that, which the
+cron flow does not require, so this is a real tradeoff and not a pure win.
+
 **Gotcha:** dockhand's variable precedence is repo `.env` file → dockhand stack
 variables → deploy-time env (later wins). Never set `KARAKEEP_RANDOM_RSS_VERSION`
 as a dockhand stack variable, or it will silently override every future version
