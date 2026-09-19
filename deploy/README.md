@@ -124,8 +124,8 @@ ssh -t percival 'sudo docker exec miniflux wget -qO- http://karakeep-random-rss:
 ssh -t percival 'sudo docker exec miniflux wget -qO- http://karakeep-random-rss:8080/feed.xml'
 ```
 
-(Or `curl` if available in the Miniflux image; `wget` is more common in
-container images.)
+The Miniflux image ships `/usr/bin/wget` and a shell, but **no** `curl` —
+verified against `miniflux/miniflux:latest`, so use `wget` as above.
 
 Note: `sudo` on percival requires an interactive password (passwordless sudo is
 not configured), so these commands must run interactively. The `-t` flag forces
