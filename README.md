@@ -81,6 +81,13 @@ If Miniflux runs in another compose project, join its network instead of
 publishing a port and subscribe to
 `http://karakeep-random-rss:8080/feed.xml`.
 
+### Dockhand (percival)
+
+This service can also run as a git-backed dockhand stack on the homelab host
+`percival`, alongside existing Karakeep and Miniflux containers. It joins their
+docker networks instead of publishing a port, so Miniflux reaches it directly.
+See [`deploy/README.md`](deploy/README.md) for the full deployment runbook.
+
 ## systemd
 
 ```sh
