@@ -179,7 +179,7 @@ func RenderFeed(cfg *Config, items []Item, now time.Time) ([]byte, error) {
 	for i := len(items) - 1; i >= 0; i-- {
 		it := items[i]
 		ri := rssItem{
-			Title:       it.Title,
+			Title:       cfg.ItemTitlePrefix + it.Title,
 			Link:        it.URL,
 			GUID:        guid{Value: it.GUID, IsPermaLink: "false"},
 			PubDate:     it.PublishedAt.UTC().Format(time.RFC1123Z),

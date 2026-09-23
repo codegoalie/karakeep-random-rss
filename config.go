@@ -14,20 +14,21 @@ import (
 // environment variable so the same binary works under systemd, Docker and a
 // bare shell. Flags win over environment variables.
 type Config struct {
-	KarakeepURL string        // base URL of the Karakeep instance
-	APIKey      string        // Karakeep API key (Settings > API Keys)
-	Listen      string        // host:port to serve the feed on
-	Interval    time.Duration // how often a new random link is published
-	StateFile   string        // where the seen-set and published items live
-	FeedItems   int           // how many items to keep in the feed
-	FeedTitle   string
-	FeedDesc    string
-	PublicURL   string // public URL of the feed, used for the atom self link
-	HTTPTimeout time.Duration
-	AdminToken  string // optional; enables POST /publish when set
-	Tag         string // optional tag filter (client side)
-	ListName    string // optional list filter (client side)
-	MaxPages    int    // safety valve on bookmark pagination
+	KarakeepURL     string        // base URL of the Karakeep instance
+	APIKey          string        // Karakeep API key (Settings > API Keys)
+	Listen          string        // host:port to serve the feed on
+	Interval        time.Duration // how often a new random link is published
+	StateFile       string        // where the seen-set and published items live
+	FeedItems       int           // how many items to keep in the feed
+	FeedTitle       string
+	FeedDesc        string
+	ItemTitlePrefix string // prepended to each item's title at render time
+	PublicURL       string // public URL of the feed, used for the atom self link
+	HTTPTimeout     time.Duration
+	AdminToken      string // optional; enables POST /publish when set
+	Tag             string // optional tag filter (client side)
+	ListName        string // optional list filter (client side)
+	MaxPages        int    // safety valve on bookmark pagination
 }
 
 func envOr(key, def string) string {
@@ -82,6 +83,8 @@ func LoadConfig(args []string) (*Config, error) {
 		"number of items to keep in the feed (env FEED_ITEMS)")
 	fs.StringVar(&c.FeedTitle, "feed-title", envOr("FEED_TITLE", "Karakeep: a random link"),
 		"feed title (env FEED_TITLE)")
+	fs.StringVar(&c.ItemTitlePrefix, "item-title-prefix", envOr("ITEM_TITLE_PREFIX", "🔖 From the stacks: "),
+		"prefix added to each item's title so readers recognize it as resurfaced, not original (env ITEM_TITLE_PREFIX; pass -item-title-prefix=\"\" to disable)")
 	fs.StringVar(&c.FeedDesc, "feed-description", envOr("FEED_DESCRIPTION",
 		"One random bookmark from my Karakeep library, resurfaced on a schedule."),
 		"feed description (env FEED_DESCRIPTION)")

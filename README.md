@@ -60,6 +60,7 @@ Every flag has a matching environment variable; flags win.
 | `STATE_FILE` | `-state-file` | `state.json` | Must persist. Written atomically. |
 | `FEED_ITEMS` | `-feed-items` | `50` | How many past items stay in the feed. |
 | `FEED_TITLE` | `-feed-title` | `Karakeep: a random link` | |
+| `ITEM_TITLE_PREFIX` | `-item-title-prefix` | `🔖 From the stacks: ` | Prepended to each item's `<title>` at render time (stored titles stay unprefixed). Pass `-item-title-prefix=""` to disable. |
 | `FEED_DESCRIPTION` | `-feed-description` | … | |
 | `LIST` | `-list` | — | Restrict to one Karakeep list, by name. |
 | `TAG` | `-tag` | — | Restrict to bookmarks carrying this tag. |
