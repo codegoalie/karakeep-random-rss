@@ -75,6 +75,72 @@ func TestRenderFeedIsWellFormedAndNewestFirst(t *testing.T) {
 	}
 }
 
+func TestRenderFeedAppliesItemTitlePrefix(t *testing.T) {
+	now := time.Date(2026, 9, 18, 12, 0, 0, 0, time.UTC)
+	items := []Item{
+		{GUID: "g1", BookmarkID: "b1", Title: "Some Article", URL: "https://example.com/1", PublishedAt: now},
+	}
+
+	cfg := testConfig()
+	cfg.ItemTitlePrefix = "🔖 From the stacks: "
+
+	body, err := RenderFeed(cfg, items, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var parsed struct {
+		Channel struct {
+			Items []struct {
+				Title string `xml:"title"`
+			} `xml:"item"`
+		} `xml:"channel"`
+	}
+	if err := xml.Unmarshal(body, &parsed); err != nil {
+		t.Fatalf("feed is not well-formed XML: %v", err)
+	}
+	if len(parsed.Channel.Items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(parsed.Channel.Items))
+	}
+	want := "🔖 From the stacks: Some Article"
+	if parsed.Channel.Items[0].Title != want {
+		t.Fatalf("got title %q, want %q", parsed.Channel.Items[0].Title, want)
+	}
+	// The stored item must stay unprefixed; only the rendered feed changes.
+	if items[0].Title != "Some Article" {
+		t.Fatalf("stored item title was mutated: %q", items[0].Title)
+	}
+}
+
+func TestRenderFeedEmptyItemTitlePrefixLeavesTitleUnchanged(t *testing.T) {
+	now := time.Date(2026, 9, 18, 12, 0, 0, 0, time.UTC)
+	items := []Item{
+		{GUID: "g1", BookmarkID: "b1", Title: "Some Article", URL: "https://example.com/1", PublishedAt: now},
+	}
+
+	cfg := testConfig()
+	cfg.ItemTitlePrefix = ""
+
+	body, err := RenderFeed(cfg, items, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var parsed struct {
+		Channel struct {
+			Items []struct {
+				Title string `xml:"title"`
+			} `xml:"item"`
+		} `xml:"channel"`
+	}
+	if err := xml.Unmarshal(body, &parsed); err != nil {
+		t.Fatalf("feed is not well-formed XML: %v", err)
+	}
+	if parsed.Channel.Items[0].Title != "Some Article" {
+		t.Fatalf("got title %q, want unchanged %q", parsed.Channel.Items[0].Title, "Some Article")
+	}
+}
+
 func TestRenderFeedEmpty(t *testing.T) {
 	body, err := RenderFeed(testConfig(), nil, time.Now())
 	if err != nil {
